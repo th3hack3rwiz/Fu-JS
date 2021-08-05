@@ -15,9 +15,9 @@ OFFWHITE='\e[38;5;157m'
 RED='\e[38;5;196m'
 
 function jsReconStart(){
-echo "[+] Total JS files loaded: $(cat $1 | wc -l)" | notify -silent
+echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
 count=0
-jsfiles=$(cat $1 | wc -l)
+jsfiles=$(cat ../$1 | wc -l)
 echo -e  "${GREEN}[+] Starting LinkFinder to find JS links and SecretFinder to find some secrets... "
 printf "\n" 
 while read line ; do
@@ -25,9 +25,9 @@ url=$(echo $line | sed "s#$domain.*#$domain\/#g")
 echo -e "${GREEN}[+] Running on $line " >> $domain.linkfinder-output.txt
 echo -ne "[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" #fetching base URL
 jsfiles=$(($jsfiles - 1))
-python3 ~/tools/secretfinder/SecretFinder.py -i $line -o cli >> $domain.js-secrets
+python3 YYYY -i $line -o cli >> $domain.js-secrets
 printf "\n"  >> $domain.linkfinder-output.txt
-python3 ~/tools/LinkFinder/linkfinder.py -o cli -i $line > temp 2>&1  #storing endpoints
+python3 XXXX -o cli -i $line > temp 2>&1  #storing endpoints
 cat temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
 if [ $? -eq 0 ]; then
 echo "">temp
@@ -40,14 +40,14 @@ rm add
 done
 rm temp
 fi
-done < $1
+done < ../$1
 ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | tee endpoints
 rm $domain.jsEndpointsx
 cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
 rm endpoints
 cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 | anew $file | tee newJs
 rm freshJs
-cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 ; rm testx
+cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/       /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 ; rm testx
 
 if [ ! -s newJs ]; then echo "[-] No new JS files found!" ; rm newJs ; 
 else
@@ -57,10 +57,10 @@ fi
 }
 
 function jsGrab {
-echo -e "[+] Total JS files loaded: $(cat $1 | wc -l)" | notify -silent
+echo -e "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
 mkdir rawJS 2>&1 > /dev/null
 echo -e  "${GREEN}[+] Fetching all JS file for static recon..."
-for i in $(cat $1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
+for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
 do 
 name=$(echo -e  $i | md5sum | awk '{print $1}')
 ls rawJS/ | grep $name >/dev/null
@@ -93,20 +93,21 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 }
 
 function gatherJS {
-	cat $1 | httprobe --prefer-https | anew -q https-subdomains
+	cd Fu-JS.output
+	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
 
 	#hakrawler js
 		
-	for i in $(cat https-subdomains); do hakrawler -js -robots -scope subs -url $i -depth $depth -headers User-Agent: testing -insecure | anew $domain.crawlledEndpoints ; done
+	for i in $(cat https-subdomains); do hakrawler -plain -js -robots -scope subs -url $i -depth $depth -headers User-Agent: testing -insecure; done | grep -E "\.js$"| anew $domain.crawlledEndpoints 
 
 	# Gathering JS Links from subdomains
 
-	cat $domain.crawlledEndpoints | grep "\[javascript" | sed 's/^.*http/http/g' | grep $domain | anew -q $2 	# Saving live JS links
+	cat $domain.crawlledEndpoints | grep $domain | anew -q ../$2 	# Saving live JS links
 	echo -e  "${GREEN}[+] Gathering JS Files from subdomains using subjs..."
 	
 	#subjs
 
-	cat https-subdomains | subjs | anew -q $2
+	cat https-subdomains | subjs | anew -q ../$2
 
 	#wayback + gau
 	
@@ -115,17 +116,17 @@ function gatherJS {
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff ; echo -e  "DONE!"
 	echo -e  "${GREEN}[+] Running on SubDomains now to grab js files... "
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
-	cat $domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | anew -q $2
+	cat $domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | anew -q ../$2
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
 	printf "\n"
-	echo -e  "$(cat $2 | wc -l ) Number of JS links found!"
-	file="$2"
+	echo -e  "$(cat ../$2 | wc -l ) Number of JS links found!"
+	file="../$2"
 	jsReconStart "$file"
 	#rm freshJs
 	jsGrab "$file"
 	cd rawJS
-	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../$1 | notify
+	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../../$1 | notify
 	cd ..
 }
 
@@ -159,6 +160,7 @@ while getopts :s:j:hd: fuzz_args; do
 done
 shift $((OPTIND-1))
 domain=$1
+mkdir Fu-JS.output >/dev/null 2>&1
 tar=$(echo $domain | sed 's/\..*//g')
 if [[ $# -ne 1 ]] ; then
 	usage
@@ -170,6 +172,7 @@ else
 	
 	#if [[ $jsF -eq 1 ]]; then
 	if [[ $jsF -eq 1 && $sF -ne 1 ]] ; then
+	cd Fu-JS.output
 	jsReconStart "$file"
 	jsGrab "$file"		
 	
