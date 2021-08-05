@@ -75,3 +75,4 @@ temp=$(pwd)/SecretFinder.py
 cd ..
 sed -i "s#YYYY#$temp#g" Fu-JS.sh
 chmod +x Fu-JS.sh
+sudo ln -s $(pwd)/Fu-JS.sh /usr/bin/Fu-JS
