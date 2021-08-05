@@ -160,12 +160,12 @@ while getopts :s:j:hd: fuzz_args; do
 done
 shift $((OPTIND-1))
 domain=$1
-mkdir Fu-JS.output >/dev/null 2>&1
 tar=$(echo $domain | sed 's/\..*//g')
 if [[ $# -ne 1 ]] ; then
 	usage
 	echo -e "\n[-] Something went wrong! Check usage. (above)"
 else
+	mkdir Fu-JS.output >/dev/null 2>&1
 	if [[ $dF -ne 1 ]] ; then
 		depth=1
 	fi
