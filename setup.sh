@@ -11,15 +11,25 @@ read -p "Do you have golang installed and GOPATH set?(y/n):"
 if [[ "$REPLY" != "y" ]]; then echo "Ok, installing golang!"
 	sudo apt install golang
 	 if [[ -f ~/.zshrc ]]; then 
-        echo 'export PATH="$PATH:/home/${user}/go/bin/"'>> ~/.zshrc
-        echo 'export GOPATH="/home/${user}/go"' >> ~/.zshrc
+        test='export PATH="$PATH:/home'
+	test1=${user}/go/bin/
+	echo $test/$test1\">> ~/.zshrc
+        
+	test='export GOPATH="/home'
+	test1=${user}/go/
+	echo $test/$test1\">> ~/.zshrc
         source ~/.zshrc 
 	else
-        echo 'export PATH="$PATH:/home/${user}/go/bin/"'>> ~/.bashrc
-        echo 'export GOPATH="/home/${user}/go"' >> ~/.bashrc
-        source ~/.bashrc
+	
+        test='export PATH="$PATH:/home'
+	test1=${user}/go/bin/
+	echo $test/$test1\">> ~/.bashrc
+        
+	test='export GOPATH="/home'
+	test1=${user}/go/
+	echo $test/$test1\">> ~/.bashrc
+        source ~/.bashrc 
 	fi
-
 else
 	echo $GOPATH | grep "go" >/dev/null 
 	if [[ $? -eq 0 ]]
