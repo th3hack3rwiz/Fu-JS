@@ -5,8 +5,8 @@ if [[ "$user" = "root" ]]; then
 echo "[!] Do not run as root!"
 exit 1
 fi
-
-if 
+sudo apt-get install python3-pip
+sudo apt install pip
 read -p "Do you have golang installed and GOPATH set?(y/n):"
 if [[ "$REPLY" != "y" ]]; then echo "Ok, installing golang!"
 	sudo apt install golang
@@ -50,7 +50,7 @@ go get -u github.com/tomnomnom/httprobe
 echo "[+] Installing linkfinder"
 git clone https://github.com/GerbenJavado/LinkFinder.git
 cd LinkFinder
-sudo python setup.py install
+sudo python3 setup.py install
 chmod +x linkfinder.py
 temp=$(pwd)/linkfinder.py
 cd ../
@@ -59,7 +59,7 @@ echo "[+] Installing secretfinder"
 git clone https://github.com/m4ll0k/SecretFinder.git secretfinder
 pip3 install jsbeautifier
 cd secretfinder
-sudo python -m pip install -r requirements.txt
+sudo pip install -r requirements.txt
 chmod +x SecretFinder.py
 temp=$(pwd)/SecretFinder.py
 cd ..
