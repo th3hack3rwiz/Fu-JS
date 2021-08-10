@@ -15,7 +15,7 @@ OFFWHITE='\e[38;5;157m'
 RED='\e[38;5;196m'
 
 function jsReconStart(){
-echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
+echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 count=0
 jsfiles=$(cat ../$1 | wc -l)
 echo -e  "${GREEN}[+] Starting LinkFinder to find JS links and SecretFinder to find some secrets... "
@@ -51,13 +51,13 @@ cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%2
 
 if [ ! -s newJs ]; then echo "[-] No new JS files found!" ; rm newJs ; 
 else
-echo "$(cat newJs | wc -l)New JS Files found!" | notify
+echo "$(cat newJs | wc -l)New JS Files found!" #| notify
 jsReconStart "newJs"
 fi 
 }
 
 function jsGrab {
-echo -e "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
+echo -e "[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 mkdir rawJS 2>&1 > /dev/null
 echo -e  "${GREEN}[+] Fetching all JS file for static recon..."
 for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
