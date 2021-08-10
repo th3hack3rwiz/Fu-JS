@@ -1,4 +1,11 @@
 #!/bin/bash
+sudo apt install figlet
+BOLD='\e[1m'
+GOLD='\e[38;5;226m'
+GREY='\033[0;37m'
+GREEN='\e[38;5;149m'
+echo -e "${GREY}${BOLD}$(figlet -t -f slant Welcome to)" ; echo -e "${GOLD}${BOLD}$(figlet -t -f script Fu-JS!)"
+echo -e "\033[0;37m\e[1m\t\t\t\t\t\t  ${GREY}${BOLD}© Created By: th3hack3rwiz\n"
 user=$(whoami)
 
 if [[ "$user" = "root" ]]; then
