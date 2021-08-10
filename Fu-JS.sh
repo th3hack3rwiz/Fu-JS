@@ -93,7 +93,7 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 }
 
 function gatherJS {
-	cd Fu-JS.output
+	cd Fu-JS.$domain
 	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
 
 	#hakrawler js
@@ -165,14 +165,14 @@ if [[ $# -ne 1 ]] ; then
 	usage
 	echo -e "\n[-] Something went wrong! Check usage. (above)"
 else
-	mkdir Fu-JS.output >/dev/null 2>&1
+	mkdir Fu-JS.$domain >/dev/null 2>&1
 	if [[ $dF -ne 1 ]] ; then
 		depth=1
 	fi
 	
 	#if [[ $jsF -eq 1 ]]; then
 	if [[ $jsF -eq 1 && $sF -ne 1 ]] ; then
-	cd Fu-JS.output
+	cd Fu-JS.$domain
 	jsReconStart "$file"
 	jsGrab "$file"		
 	
