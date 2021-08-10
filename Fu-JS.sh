@@ -126,7 +126,7 @@ function gatherJS {
 	#rm freshJs
 	jsGrab "$file"
 	cd rawJS
-	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../../$1 | notify
+	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../../$1 #| notify
 	cd ..
 }
 
