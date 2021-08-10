@@ -121,7 +121,7 @@ function gatherJS {
 	rm $domain.crawlledEndpoints 
 	printf "\n"
 	echo -e  "$(cat ../$2 | wc -l ) Number of JS links found!"
-	file="../$2"
+	file="$2"
 	jsReconStart "$file"
 	#rm freshJs
 	jsGrab "$file"
