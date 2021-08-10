@@ -45,7 +45,7 @@ ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0
 rm $domain.jsEndpointsx
 cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
 rm endpoints
-cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 | anew $file | tee newJs
+cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 | anew ../$1 | tee newJs
 rm freshJs
 cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/       /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 ; rm testx
 
