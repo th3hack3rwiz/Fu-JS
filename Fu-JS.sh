@@ -15,44 +15,44 @@ OFFWHITE='\e[38;5;157m'
 RED='\e[38;5;196m'
 
 function jsReconStart(){
-echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
+echo "[+] Total JS files loaded: $(cat $1 | wc -l)" #| notify -silent
 count=0
-jsfiles=$(cat ../$1 | wc -l)
+jsfiles=$(cat $1 | wc -l)
 echo -e  "${GREEN}[+] Starting LinkFinder to find JS links and SecretFinder to find some secrets... "
 printf "\n" 
 while read line ; do
 url=$(echo $line | sed "s#$domain.*#$domain\/#g")
-echo -e "${GREEN}[+] Running on $line " >> $domain.linkfinder-output.txt
+echo -e "${GREEN}[+] Running on $line " >> Fu-JS.$domain/$domain.linkfinder-output.txt
 echo -ne "[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" #fetching base URL
 jsfiles=$(($jsfiles - 1))
-python3 YYYY -i $line -o cli >> $domain.js-secrets
-printf "\n"  >> $domain.linkfinder-output.txt
-python3 XXXX -o cli -i $line > temp 2>&1  #storing endpoints
-cat temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
+python3 YYYY -i $line -o cli >> Fu-JS.$domain/$domain.js-secrets
+printf "\n"  >> Fu-JS.$domain/$domain.linkfinder-output.txt
+python3 XXXX -o cli -i $line > Fu-JS.$domain/temp 2>&1  #storing endpoints
+cat Fu-JS.$domain/temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
 if [ $? -eq 0 ]; then
-echo "">temp
+truncate -s0 Fu-JS.$domain/temp
 else 
-cat temp >> $domain.linkfinder-output.txt
-for j in $(cat temp | grep -vE "^/$|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|@|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.jpeg$|\.png$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$") ; do
-echo $j |xargs --max-args=1 --replace="{}" echo "$url{}" 2>&1 | grep $domain | sed "s#$domain\/*#$domain\/#g" | grep $tar |  anew $domain.jsEndpointsx | wc -l >add
+cat Fu-JS.$domain/temp >> Fu-JS.$domain/$domain.linkfinder-output.txt
+for j in $(cat Fu-JS.$domain/temp | grep -vE "^/$|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|@|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.jpeg$|\.png$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$") ; do
+echo $j |xargs --max-args=1 --replace="{}" echo "$url{}" 2>&1 | grep $domain | sed "s#$domain\/*#$domain\/#g" | grep $tar |  anew Fu-JS.$domain/$domain.jsEndpointsx | wc -l >add
 count=$(($count + $(cat add)))
 rm add
 done
-rm temp
+rm Fu-JS.$domain/temp
 fi
-done < ../$1
-ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | tee endpoints
-rm $domain.jsEndpointsx
-cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
-rm endpoints
-cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 | anew ../$1 | tee newJs
-rm freshJs
-cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/       /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 ; rm testx
+done < $1
+ffuf -s -u FUZZ -w Fu-JS.$domain/$domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o Fu-JS.$domain/testx | tee Fu-JS.$domain/endpoints
+rm Fu-JS.$domain/$domain.jsEndpointsx
+cat Fu-JS.$domain/endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > Fu-JS.$domain/freshJs
+rm Fu-JS.$domain/endpoints
+cat Fu-JS.$domain/freshJs | grep -E "200$" | tr -d '200' | xargs -n1 | anew $1 | tee Fu-JS.$domain/newJs
+rm Fu-JS.$domain/freshJs
+cat Fu-JS.$domain/testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/       /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q Fu-JS.$domain/js-active-endpoints 2>&1 ; rm Fu-JS.$domain/testx
 
-if [ ! -s newJs ]; then echo "[-] No new JS files found!" ; rm newJs ; 
+if [ ! -s Fu-JS.$domain/newJs ]; then echo "[-] No new JS files found!" ; rm Fu-JS.$domain/newJs ; 
 else
-echo "$(cat newJs | wc -l)New JS Files found!" #| notify
-jsReconStart "newJs"
+echo "$(cat Fu-JS.$domain/newJs | wc -l) New JS Files found!" #| notify
+jsReconStart "Fu-JS.$domain/newJs"
 fi 
 }
 
@@ -93,34 +93,34 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 }
 
 function gatherJS {
-	cd Fu-JS.$domain
-	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
+	#cd Fu-JS.$domain
+	cat $1 | httprobe --prefer-https | anew -q Fu-JS.$domain/https-subdomains
 
 	#hakrawler js
 		
-	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew $domain.crawlledEndpoints 
+	cat Fu-JS.$domain/https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew Fu-JS.$domain/$domain.crawlledEndpoints 
 
 	# Gathering JS Links from subdomains
 
-	cat $domain.crawlledEndpoints | grep $tar | anew -q ../$2 	# Saving live JS links
+	cat Fu-JS.$domain/$domain.crawlledEndpoints | grep $tar | anew -q $2 	# Saving live JS links
 	echo -e  "${GREEN}[+] Gathering JS Files from subdomains using subjs..."
 	
 	#subjs
 	echo "[+] Firing SubJS"
-	cat https-subdomains | subjs | grep $tar | anew -q ../$2
+	cat Fu-JS.$domain/https-subdomains | subjs | grep $tar | anew -q $2
 
 	#wayback + gau
 	
 	echo -e  "${GREEN}[+] Starting waybackurls + gau to get useful JS files. (This can take a while) "
 	printf "\n"
-	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff ; echo -e  "DONE!"
+	echo -e  $domain | waybackurls| anew -q Fu-JS.$domain/$domain.urls & gau -subs $domain | anew -q Fu-JS.$domain/$domain.urls ; wait ; cat Fu-JS.$domain/$domain.urls | sort -u > buff ; cat buff > Fu-JS.$domain/$domain.urls ; rm buff ; echo -e  "DONE!"
 	echo -e  "${GREEN}[+] Running on individual subdomains now to grab js files... "
-	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
-	cat $domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
-	rm $domain.urls
-	rm $domain.crawlledEndpoints 
+	for line in $(cat Fu-JS.$domain/https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q Fu-JS.$domain/$domain.urls ; done
+	cat Fu-JS.$domain/$domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q $2
+	rm Fu-JS.$domain/$domain.urls
+	rm Fu-JS.$domain/$domain.crawlledEndpoints 
 	printf "\n"
-	echo -e  "$(cat ../$2 | wc -l ) Number of JS links found!"
+	echo -e  "$(cat $2 | wc -l ) Number of JS links found!"
 	file="$2"
 	jsReconStart "$file"
 	#rm freshJs
