@@ -64,6 +64,8 @@ echo "[+] Installing ffuf"
 go get -u github.com/ffuf/ffuf
 echo "[+] Installing hakrawler"
 go get github.com/hakluke/hakrawler
+echo "[+] Installing hakcheckurl"
+go get github.com/hakluke/hakcheckurl
 echo "[+] Installing qsreplace"
 go get -u github.com/tomnomnom/qsreplace
 echo "[+] Installing httprobe"
