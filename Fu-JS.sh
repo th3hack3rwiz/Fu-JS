@@ -98,7 +98,7 @@ function gatherJS {
 
 	#hakrawler js
 		
-	for i in $(cat https-subdomains); do echo "[+] Crawling $i" ; hakrawler -plain -js -robots -scope subs -url $i -depth $depth -headers User-Agent: testing -insecure; done | grep -E "\.js$"| anew $domain.crawlledEndpoints 
+	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew $domain.crawlledEndpoints 
 
 	# Gathering JS Links from subdomains
 
