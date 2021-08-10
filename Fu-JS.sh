@@ -98,7 +98,7 @@ function gatherJS {
 
 	#hakrawler js
 		
-	for i in $(cat https-subdomains); do hakrawler -plain -js -robots -scope subs -url $i -depth $depth -headers User-Agent: testing -insecure; done | grep -E "\.js$"| anew $domain.crawlledEndpoints 
+	for i in $(cat https-subdomains); do echo "[+] Crawling $i" ; hakrawler -plain -js -robots -scope subs -url $i -depth $depth -headers User-Agent: testing -insecure; done | grep -E "\.js$"| anew $domain.crawlledEndpoints 
 
 	# Gathering JS Links from subdomains
 
@@ -106,15 +106,15 @@ function gatherJS {
 	echo -e  "${GREEN}[+] Gathering JS Files from subdomains using subjs..."
 	
 	#subjs
-
+	echo "[+] Firing SubJS"
 	cat https-subdomains | subjs | anew -q ../$2
 
 	#wayback + gau
 	
-	echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
+	echo -e  "${GREEN}[+] Starting waybackurls + gau to get useful JS files. (This can take a while) "
 	printf "\n"
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff ; echo -e  "DONE!"
-	echo -e  "${GREEN}[+] Running on SubDomains now to grab js files... "
+	echo -e  "${GREEN}[+] Running on individual subdomains now to grab js files... "
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
 	cat $domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | anew -q ../$2
 	rm $domain.urls
