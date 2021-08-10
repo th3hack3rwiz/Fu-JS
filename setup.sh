@@ -48,6 +48,23 @@ else
 	fi
 echo "OK, installing necessary tools now."
 fi
+echo "[+] Installing gf"
+lol=$(pwd)
+cd ~
+mkdir .gf
+go get -u github.com/tomnomnom/gf
+cp $GOPATH/src/github.com/tomnomnom/gf/examples/* ~/.gf
+if [[ -f ~/.zshrc ]]; then 
+        echo 'source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.bash' >> ~/.zshrc
+	echo "autoload -U compaudit && compinit\nsource /home/kali/go/src/github.com/tomnomnom/gf/gf-completion.zsh" >> ~/.zshrc
+	source ~/.zshrc
+else
+	echo 'source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.bash' >> ~/.bashrc
+	echo "autoload -U compaudit && compinit\nsource /home/kali/go/src/github.com/tomnomnom/gf/gf-completion.zsh" >> ~/.bashrc
+	source ~/.bashrc
+
+fi
+cd $lol
 echo "[+] Installing anew"
 go get -u github.com/tomnomnom/anew
 echo "[+] Installing fff"
