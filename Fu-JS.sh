@@ -97,7 +97,7 @@ for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "
 cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
 rm $domain.linkfinderWordlist.txt
 if [ ! -s $domain.js-wordlist ]; then echo "[-] No api related words found!" ; rm $domain.js-wordlist ; fi
-	cd ..
+	#cd ..
 }
 
 function usage {
@@ -112,12 +112,12 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 }
 
 function gatherJS {
-	cd Fu-JS.output
+	cd Fu-js.$domain
 	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
 
 	#hakrawler js
-		
-	for i in $(cat https-subdomains); do hakrawler -plain -js -robots -scope subs -url $i -depth 1 -headers User-Agent: testing -insecure; done | grep -E "\.js$"| anew $domain.crawlledEndpoints 
+	
+	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew -q $domain.crawlledEndpoints
 
 	# Gathering JS Links from subdomains
 
@@ -126,7 +126,7 @@ function gatherJS {
 	
 	#subjs
 
-	cat https-subdomains | subjs | anew -q ../$2
+	cat https-subdomains | subjs | grep $tar | anew -q ../$2
 
 	#wayback + gau
 	
@@ -135,14 +135,13 @@ function gatherJS {
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff ; echo -e  "DONE!"
 	echo -e  "${GREEN}[+] Running on SubDomains now to grab js files... "
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
-	cat $domain.urls | grep ".js$" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | anew -q ../$2
+	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
 	printf "\n"
 	echo -e  "$(cat ../$2 | wc -l ) Number of JS links found!"
-	file="../$2"
+	file="$2"
 	jsReconStart "$file"
-	#rm freshJs
 	jsGrab "$file"
 	cd rawJS
 	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../../$1 | notify
@@ -179,7 +178,7 @@ while getopts :s:j:hd: fuzz_args; do
 done
 shift $((OPTIND-1))
 domain=$1
-mkdir Fu-JS.output >/dev/null 2>&1
+mkdir Fu-js.$domain >/dev/null 2>&1
 tar=$(echo $domain | sed 's/\..*//g')
 if [[ $# -ne 1 ]] ; then
 	usage
@@ -188,10 +187,8 @@ else
 	if [[ $dF -ne 1 ]] ; then
 		depth=1
 	fi
-	
-	#if [[ $jsF -eq 1 ]]; then
 	if [[ $jsF -eq 1 && $sF -ne 1 ]] ; then
-	cd Fu-JS.output
+	cd Fu-js.$domain
 	jsReconStart "$file"
 	jsGrab "$file"		
 	
