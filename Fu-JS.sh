@@ -15,10 +15,10 @@ OFFWHITE='\e[38;5;157m'
 RED='\e[38;5;196m'
 
 function jsReconStart(){
-	echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
+	echo -e "\n[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 	count=0
 	jsfiles=$(cat ../$1 | wc -l)
-	echo -e  "${OFFWHITE}\n[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
+	echo -e  "${OFFWHITE}[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
 	printf "\n" 
 	while read line ; do
 		url=$(echo $line | sed "s#$domain.*#$domain\/#g")	#fetching base URL
@@ -58,7 +58,7 @@ function jsReconStart(){
 		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
 		rm endpoints
 		cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
-		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 
+		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints > /dev/null 2>&1 
 		fi
 		rm testx
 
@@ -75,7 +75,7 @@ function jsReconStart(){
 	if [ $? -eq 1 ] ; then
 		echo -e "\n${RED}[-] No new JS files found!\n" ; rm ../newJs ; 
 	else
-		echo "$(cat ../newJs | wc -l)New JS Files found! :O Gotta repeat this sequence to extract more endpoints. (*Sip*)" #| notify
+		echo -e "[+] $(cat ../newJs | wc -l) New JS Files found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
 		jsReconStart "newJs"
 	fi 
 }
@@ -101,7 +101,7 @@ cd ..
 for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev "%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | sed 's/://g' | sort -u | anew -q $domain.linkfinderWordlist.txt ; done
 cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
 rm $domain.linkfinderWordlist.txt
-if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo -e "[+] Wordlist Generated!\n"
+if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo -e "\n${OFFWHITE}[+] Wordlist Generated!\n"
 fi
 }
 
@@ -135,7 +135,7 @@ function gatherJS {
 	
 	#echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
 	printf "\n"
-	echo -e  "${GREEN}[+] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break? *Sip*\n"
+	echo -e  "${GREEN}[+] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
 	echo -e "\n[+] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found! Let's find out how many of them are alive..."
@@ -193,7 +193,6 @@ else
 		depth=1
 	fi
 	
-	#if [[ $jsF -eq 1 ]]; then
 	if [[ $jsF -eq 1 && $sF -ne 1 ]] ; then
 	cd Fu-js.$domain
 	jsReconStart "$file"
