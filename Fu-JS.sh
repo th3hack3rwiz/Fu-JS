@@ -18,16 +18,16 @@ function jsReconStart(){
 	echo "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
 	count=0
 	jsfiles=$(cat ../$1 | wc -l)
-	echo -e  "${GREEN}\n[+] Starting LinkFinder to find JS links and SecretFinder to find some secrets... "
+	echo -e  "${OFFWHITE}\n[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
 	printf "\n" 
 	while read line ; do
-		url=$(echo $line | sed "s#$domain.*#$domain\/#g")
+		url=$(echo $line | sed "s#$domain.*#$domain\/#g")	#fetching base URL
 		echo -e "${GREEN}[+] Running on $line " >> $domain.linkfinder-output.txt
-		echo -ne "[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" #fetching base URL
+		echo -ne "[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" 
 		jsfiles=$(($jsfiles - 1))
-		python3 ~/tools/secretfinder/SecretFinder.py -i $line -o cli >> $domain.js-secrets
+		python3 YYYY -i $line -o cli >> $domain.js-secrets
 		printf "\n"  >> $domain.linkfinder-output.txt
-		python3 ~/tools/LinkFinder/linkfinder.py -o cli -i $line > temp 2>&1  #storing endpoints
+		python3 XXXX -o cli -i $line > temp 2>&1  #storing endpoints
 		cat temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
 		if [ $? -eq 0 ]; then
 			truncate -s0 temp
@@ -49,13 +49,19 @@ function jsReconStart(){
 		fi
 	done < ../$1
 	if [ -s $domain.jsEndpointsx ] ; then 
-		ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | tee endpoints
+		echo -e "\n\n${PEACH}[+] Finding alive endpoints extracted from JS files. ~_~"
+		num=$(ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | anew endpoints | wc -l)
+		if [ $num -eq 0 ] ; then echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
+		else 
+		echo -e "[+] $num alive endpoints found! :D"
 		rm $domain.jsEndpointsx
 		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
 		rm endpoints
 		cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
-		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | column -t | anew -q js-active-endpoints 2>&1 
+		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints 2>&1 
+		fi
 		rm testx
+
 	fi
 	cat $domain.js-secrets | gf urls | grep $tar | grep -E "\.js$" >> temp
 	cat temp > freshJs
@@ -67,44 +73,42 @@ function jsReconStart(){
 	
 	cat ../newJs | grep -E "\.js$" >/dev/null
 	if [ $? -eq 1 ] ; then
-		echo -e "\n[-] No new JS files found!" ; rm ../newJs ; 
+		echo -e "\n${RED}[-] No new JS files found!\n" ; rm ../newJs ; 
 	else
-		echo "$(cat ../newJs | wc -l)New JS Files found!" | notify
+		echo "$(cat ../newJs | wc -l)New JS Files found! :O Gotta repeat this sequence to extract more endpoints. (*Sip*)" | notify
 		jsReconStart "newJs"
 	fi 
 }
 
 function jsGrab {
 echo -e "[+] Total JS files loaded: $(cat ../$1 | wc -l)" | notify -silent
-mkdir rawJS 2>&1 > /dev/null
-echo -e  "${GREEN}[+] Fetching all JS file for static recon..."
+mkdir js-dump 2>&1 > /dev/null
+echo -e  "${GREEN}[+] Fetching all JS files for manual static recon...\n"
 for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
 do 
 name=$(echo -e  $i | md5sum | awk '{print $1}')
-ls rawJS/ | grep $name >/dev/null
+ls js-dump/ | grep $name >/dev/null
 if [ $? -ne 0   ]; then
-echo -e  "${GREY}[+] RUNNING ON $i" | tee -a rawJS/$name
-curl -L --connect-timeout 10 --max-time 10 --insecure --silent $i | js-beautify -i 2> /dev/null >> rawJS/$name 
-if [ $(cat rawJS/$name | wc -l) -lt 4 ] ; then rm rawJS/$name ; fi 
-printf "\n"
+echo -e  "${GREY}[+] Fetching $i" | tee -a js-dump/$name
+curl -L --connect-timeout 10 --max-time 10 --insecure --silent $i | js-beautify -i 2> /dev/null >> js-dump/$name 
+if [ $(cat js-dump/$name | wc -l) -lt 4 ] ; then rm js-dump/$name ; fi 
 fi
 done
 #creating wordlists
-cd rawJS
+cd js-dump
 for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$" ; done ; done | anew -q ../$domain.js-wordlist
 cd ..
 for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev "%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | sed 's/://g' | sort -u | anew -q $domain.linkfinderWordlist.txt ; done
 cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
 rm $domain.linkfinderWordlist.txt
-if [ ! -s $domain.js-wordlist ]; then echo "[-] No api related words found!" ; rm $domain.js-wordlist ; fi
-	#cd ..
+if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo "[+] Wordlist Generated!\n"
+fi
 }
 
 function usage {
-echo -e "${PINK}\n[+] Usage:\n\t./jsSwimmer.sh -j <js-file-list> target.com"
+echo -e "${PINK}\n[+] Usage:\n\t./jsSwimmer.sh -j <js-file-list> -s <subdomain-list> target.com"
 echo -e "\n${GREEN} -j : to use your own list of js files"
 echo -e "${GREEN}  Eg: ./jsSwimmer.sh -j <js-file-list> target.com\n"
-
 echo -e "\n${GREEN} -s : to use a file containing subdomains of target to gather JS files linked to those subdomains."
 echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> target.com"
 echo -e "\n${GREEN} -d : to define depth while crawling subdomais (By default 1)."
@@ -122,7 +126,7 @@ function gatherJS {
 	# Gathering JS Links from subdomains
 
 	cat $domain.crawlledEndpoints | grep $domain | anew -q ../$2 	# Saving live JS links
-	echo -e  "${GREEN}[+] Gathering JS Files from subdomains using subjs..."
+	echo -e  "${GREEN}[+] Crawling subdomains to gather JS Files... ~_~"
 	
 	#subjs
 
@@ -130,20 +134,22 @@ function gatherJS {
 
 	#wayback + gau
 	
-	echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
+	#echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
 	printf "\n"
-	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff ; echo -e  "DONE!"
-	echo -e  "${GREEN}[+] Running on SubDomains now to grab js files... "
+	echo -e  "${GREEN}[+] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. Perhaps time for a coffee break?\n"
+	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
+	echo -e "\n[+] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found! Let's find out how many of them are alive..."
 	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
 	printf "\n"
-	echo -e  "$(cat ../$2 | wc -l ) Number of JS links found!"
+	echo -e  "[+]$(cat ../$2 | wc -l ) JS files are alive!"
 	file="$2"
 	jsReconStart "$file"
+	#rm freshJs
 	jsGrab "$file"
-	cd rawJS
+	cd js-dump
 	gf urls | unfurl domains | sort -u | grep $domain | xargs -n1 | anew ../../$1 | notify
 	cd ..
 }
@@ -187,6 +193,8 @@ else
 	if [[ $dF -ne 1 ]] ; then
 		depth=1
 	fi
+	
+	#if [[ $jsF -eq 1 ]]; then
 	if [[ $jsF -eq 1 && $sF -ne 1 ]] ; then
 	cd Fu-js.$domain
 	jsReconStart "$file"
@@ -201,4 +209,5 @@ else
 	echo "[~] Please use -j or -s flag"
 fi
 rm https-subdomains >/dev/null 2>&1
+echo -e "${GOLD}\n[^_^] Thank you for using Fu-JS! [^_^]"
 fi
