@@ -118,7 +118,7 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 function gatherJS {
 	cd Fu-js.$domain
 	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
-	echo -e  "${GREEN}[+] Crawling subdomains to gather JS Files... ~_~"
+	echo -e  "\n${GREEN}[+] Crawling subdomains to gather JS Files... ~_~"
 	#hakrawler js
 	
 	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew -q $domain.crawlledEndpoints
