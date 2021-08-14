@@ -18,12 +18,12 @@ function jsReconStart(){
 	echo -e "\n[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 	count=0
 	jsfiles=$(cat ../$1 | wc -l)
-	echo -e  "${OFFWHITE}[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
+	echo -e  "${GREEN}[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
 	printf "\n" 
 	while read line ; do
 		url=$(echo $line | sed "s#$domain.*#$domain\/#g")	#fetching base URL
 		echo -e "${GREEN}[+] Running on $line " >> $domain.linkfinder-output.txt
-		echo -ne "[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" 
+		echo -ne "${OFFWHITE}[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" 
 		jsfiles=$(($jsfiles - 1))
 		python3 YYYY -i $line -o cli >> $domain.js-secrets
 		printf "\n"  >> $domain.linkfinder-output.txt
@@ -49,11 +49,11 @@ function jsReconStart(){
 		fi
 	done < ../$1
 	if [ -s $domain.jsEndpointsx ] ; then 
-		echo -e "\n\n${PEACH}[+] Finding alive endpoints extracted from JS files. ~_~"
+		echo -e "\n\n${GREEN}[+] Finding alive endpoints extracted from JS files. ~_~"
 		num=$(ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | anew endpoints | wc -l)
 		if [ $num -eq 0 ] ; then echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
 		else 
-		echo -e "[+] $num alive endpoints found! :D"
+		echo -e "${GREEN}[i] $num alive endpoints found! :D"
 		rm $domain.jsEndpointsx
 		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
 		rm endpoints
@@ -73,9 +73,9 @@ function jsReconStart(){
 	
 	cat ../newJs | grep -E "\.js$" >/dev/null
 	if [ $? -eq 1 ] ; then
-		echo -e "\n${RED}[-] No new JS files found!\n" ; rm ../newJs ; 
+		echo -e "\n${RED}[i] No new JS files found!\n" ; rm ../newJs ; 
 	else
-		echo -e "${GOLD}[+] $(cat ../newJs | wc -l) New JS File(s) found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
+		echo -e "${GOLD}[i] $(cat ../newJs | wc -l) New JS File(s) found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
 		jsReconStart "newJs"
 	fi 
 }
@@ -118,7 +118,7 @@ echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2
 function gatherJS {
 	cd Fu-js.$domain
 	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
-	echo -e  "\n${GREEN}[+] Crawling subdomains to gather JS Files... ~_~"
+	echo -e  "${GREEN}[i] Crawling subdomains to gather JS Files... ~_~"
 	#hakrawler js
 	
 	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew -q $domain.crawlledEndpoints
@@ -135,10 +135,10 @@ function gatherJS {
 	
 	#echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
 	printf "\n"
-	echo -e  "${GREEN}[+] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
+	echo -e  "${GREEN}[i] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
-	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${GREEN}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
-	echo -e "\n[+] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found! Let's find out how many of them are alive..."
+	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${OFFWHITE}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
+	echo -e "\n${GREEN}[i] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found from wayback! Let's find out how many of them are alive..."
 	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
