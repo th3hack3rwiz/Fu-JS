@@ -55,7 +55,7 @@ function jsReconStart(){
 		else 
 		echo -e "[+] $num alive endpoints found! :D"
 		rm $domain.jsEndpointsx
-		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs
+		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
 		rm endpoints
 		cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
 		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints > /dev/null 2>&1 
@@ -75,7 +75,7 @@ function jsReconStart(){
 	if [ $? -eq 1 ] ; then
 		echo -e "\n${RED}[-] No new JS files found!\n" ; rm ../newJs ; 
 	else
-		echo -e "[+] $(cat ../newJs | wc -l) New JS Files found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
+		echo -e "${GOLD}[+] $(cat ../newJs | wc -l) New JS File(s) found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
 		jsReconStart "newJs"
 	fi 
 }
@@ -207,5 +207,5 @@ else
 	echo "[~] Please use -j or -s flag"
 fi
 rm https-subdomains >/dev/null 2>&1
-echo -e "${GOLD}\n[^_^] Thank you for using Fu-JS! [^_^]"
+echo -e "${GOLD}\n\t\t\t\t\t\t[^_^] Thank you for using Fu-JS! [^_^]"
 fi
