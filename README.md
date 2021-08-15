@@ -29,6 +29,7 @@ chmod +x setup.sh
 - httprobe: https://github.com/tomnomnom/httprobe
 - fff: https://github.com/tomnomnom/fff
 - gf: https://github.com/tomnomnom/gf
+- hakcheckurl: https://github.com/hakluke/hakcheckurl
 - python3, pip , pip3, golang
 
 
