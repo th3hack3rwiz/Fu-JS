@@ -6,7 +6,7 @@ echo -e "${GOLD}${BOLD}$(figlet -f slant  Fu-JS)"
 echo -e "\033[0;37m\e[1m\n\t\t\t  ${GREY}${BOLD}© Created By: th3hack3rwiz"
 CYAN='\033[0;36m'
 PEACH='\e[38;5;216m'
-GREEN='\e[38;5;149m'
+GREEN='\e[38;5;2m'
 ORANGE='\e[38;5;202m'
 MAGENTA='\033[0;95m'
 PINK='\e[38;5;204m'
@@ -15,18 +15,18 @@ OFFWHITE='\e[38;5;157m'
 RED='\e[38;5;196m'
 
 function jsReconStart(){
-	echo -e "\n[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
+	echo -e "\n${GREEN}[i] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 	count=0
 	jsfiles=$(cat ../$1 | wc -l)
-	echo -e  "${GREEN}[+] Let's gather some juicy endpoints and unveil the darkest secrets... "
+	echo -e  "${ORANGE}[~] Let's gather some juicy endpoints and unveil the darkest secrets... "
 	printf "\n" 
 	while read line ; do
 		url=$(echo $line | sed "s#$domain.*#$domain\/#g")	#fetching base URL
-		echo -e "${GREEN}[+] Running on $line " >> $domain.linkfinder-output.txt
+		echo -e "${ORANGE}[+] Running on $line " >> $domain.linkfinder-output.txt
 		echo -ne "${OFFWHITE}[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" 
 		jsfiles=$(($jsfiles - 1))
 		python3 YYYY -i $line -o cli >> $domain.js-secrets
-		printf "\n"  >> $domain.linkfinder-output.txt
+        printf "\n"  >> $domain.linkfinder-output.txt
 		python3 XXXX -o cli -i $line > temp 2>&1  #storing endpoints
 		cat temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
 		if [ $? -eq 0 ]; then
@@ -49,11 +49,11 @@ function jsReconStart(){
 		fi
 	done < ../$1
 	if [ -s $domain.jsEndpointsx ] ; then 
-		echo -e "\n\n${GREEN}[+] Finding alive endpoints extracted from JS files. ~_~"
+		echo -e "\n\n${ORANGE}[~] Finding alive endpoints extracted from JS files. ~_~"
 		num=$(ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | anew endpoints | wc -l)
 		if [ $num -eq 0 ] ; then echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
 		else 
-		echo -e "${GREEN}[i] $num alive endpoints found! :D"
+		echo -e "${GREEN}[i] $num alive endpoints discovered! :D"
 		rm $domain.jsEndpointsx
 		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
 		rm endpoints
@@ -73,23 +73,23 @@ function jsReconStart(){
 	
 	cat ../newJs | grep -E "\.js$" >/dev/null
 	if [ $? -eq 1 ] ; then
-		echo -e "\n${RED}[i] No new JS files found!\n" ; rm ../newJs ; 
+		echo -e "\n${RED}[~] No new JS files found!\n" ; rm ../newJs ; 
 	else
-		echo -e "${GOLD}[i] $(cat ../newJs | wc -l) New JS File(s) found! :O Gotta repeat this sequence to extract more endpoints!" #| notify
+		echo -e "\n${GOLD}[!] $(cat ../newJs | wc -l) New JS File(s) discovered! :O Gotta repeat this sequence to extract more endpoints!" #| notify
 		jsReconStart "newJs"
 	fi 
 }
 
 function jsGrab {
-echo -e "[+] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
+echo -e "${GREEN}[i] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
 mkdir js-dump 2>&1 > /dev/null
-echo -e  "${GREEN}[+] Fetching all JS files for manual static recon...\n"
+echo -e  "${ORANGE}[~] Fetching all JS files for manual static recon...\n"
 for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
 do 
 name=$(echo -e  $i | md5sum | awk '{print $1}')
 ls js-dump/ | grep $name >/dev/null
 if [ $? -ne 0   ]; then
-echo -e  "${GREY}[+] Fetching $i" | tee -a js-dump/$name
+echo -e  "${OFFWHITE}[+] Fetching $i" | tee -a js-dump/$name
 curl -L --connect-timeout 10 --max-time 10 --insecure --silent $i | js-beautify -i 2> /dev/null >> js-dump/$name 
 if [ $(cat js-dump/$name | wc -l) -lt 4 ] ; then rm js-dump/$name ; fi 
 fi
@@ -98,27 +98,27 @@ done
 cd js-dump
 for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$" ; done ; done | anew -q ../$domain.js-wordlist
 cd ..
-for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev "%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | sed 's/://g' | sort -u | anew -q $domain.linkfinderWordlist.txt ; done
+for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev ".*\.|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | sed 's/://g' | sort -u | anew -q $domain.linkfinderWordlist.txt ; done
 cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
 rm $domain.linkfinderWordlist.txt
-if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo -e "\n${OFFWHITE}[+] Wordlist Generated!\n"
+if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo -e "\n${OFFWHITE}[~] Wordlist Generated!\n"
 fi
 }
 
 function usage {
 echo -e "${PINK}\n[+] Usage:\n\t./jsSwimmer.sh -j <js-file-list> -s <subdomain-list> target.com"
-echo -e "\n${GREEN} -j : to use your own list of js files"
-echo -e "${GREEN}  Eg: ./jsSwimmer.sh -j <js-file-list> target.com\n"
-echo -e "\n${GREEN} -s : to use a file containing subdomains of target to gather JS files linked to those subdomains."
-echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> target.com"
-echo -e "\n${GREEN} -d : to define depth while crawling subdomais (By default 1)."
-echo -e "${GREEN}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2 target.com"
+echo -e "\n${ORANGE} -j : to use your own list of js files"
+echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -j <js-file-list> target.com\n"
+echo -e "\n${ORANGE} -s : to use a file containing subdomains of target to gather JS files linked to those subdomains."
+echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -s <subdomain-list> target.com"
+echo -e "\n${ORANGE} -d : to define depth while crawling subdomais (By default 1)."
+echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2 target.com"
 }
 
 function gatherJS {
 	cd Fu-js.$domain
 	cat ../$1 | httprobe --prefer-https | anew -q https-subdomains
-	echo -e  "${GREEN}[i] Crawling subdomains to gather JS Files... ~_~"
+	echo -e  "\n${ORANGE}[~] Crawling subdomains to gather JS Files... ~_~"
 	#hakrawler js
 	
 	cat https-subdomains | hakrawler -subs -u -insecure -t 50 $i -d $depth -h "User-Agent: testing" | grep -E "\.js$"| grep $tar | anew -q $domain.crawlledEndpoints
@@ -133,17 +133,15 @@ function gatherJS {
 
 	#wayback + gau
 	
-	#echo -e  "${GREEN}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
-	printf "\n"
-	echo -e  "${GREEN}[i] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
+	#echo -e  "${ORANGE}[+] Starting waybackurls + gau to get potentially vulnerable URLs and useful JS files... "
+	echo -e  "${ORANGE}[~] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${OFFWHITE}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
 	echo -e "\n${GREEN}[i] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found from wayback! Let's find out how many of them are alive..."
 	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
-	printf "\n"
-	echo -e  "[+] $(cat ../$2 | wc -l ) JS files are alive! :D"
+	echo -e  "${GREEN}[i] $(cat ../$2 | wc -l ) JS files are alive! :D"
 	file="$2"
 	jsReconStart "$file"
 	#rm freshJs
