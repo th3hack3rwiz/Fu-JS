@@ -106,13 +106,13 @@ fi
 }
 
 function usage {
-echo -e "${PINK}\n[+] Usage:\n\t./jsSwimmer.sh -j <js-file-list> -s <subdomain-list> target.com"
-echo -e "\n${ORANGE} -j : to use your own list of js files"
-echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -j <js-file-list> target.com\n"
-echo -e "\n${ORANGE} -s : to use a file containing subdomains of target to gather JS files linked to those subdomains."
-echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -s <subdomain-list> target.com"
-echo -e "\n${ORANGE} -d : to define depth while crawling subdomais (By default 1)."
-echo -e "${ORANGE}  Eg: ./jsSwimmer.sh -s <subdomain-list> -j <js-file-list> -d 2 target.com"
+echo -e "${PINK}\n[+] Usage:\n\tFu-JS -j <js-file-list> -s <subdomain-list> target.com"
+echo -e "\n${ORANGE} -j : ${OFFWHITE}to use your own list of js files."
+echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -j <js-file-list> target.com\n"
+echo -e "\n${ORANGE} -s : ${OFFWHITE}to use a file containing a list of subdomains of your target to gather JS files associated with those subdomains."
+echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> target.com"
+echo -e "\n${ORANGE} -d : ${OFFWHITE}to define depth while crawling the subdomains. (By default 1)."
+echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> -j <js-file-list> -d 2 target.com"
 }
 
 function gatherJS {
@@ -185,7 +185,7 @@ mkdir Fu-js.$domain >/dev/null 2>&1
 tar=$(echo $domain | sed 's/\..*//g')
 if [[ $# -ne 1 ]] ; then
 	usage
-	echo -e "\n[-] Something went wrong! Check usage. (above)"
+	echo -e "\n[~] Check usage. (above)"
 else
 	if [[ $dF -ne 1 ]] ; then
 		depth=1
