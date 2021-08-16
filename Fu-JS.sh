@@ -138,13 +138,13 @@ function gatherJS {
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${OFFWHITE}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
 	sum=$(cat $domain.urls | grep -E "\.js" | wc -l)
-	if [ $sum -eq 0 ]; then echo -e "${RED}[~] No JS files found using wayback. ~_~" ; else
+	if [ $sum -eq 0 ]; then echo -e "${RED}\n[~] No JS files found using wayback. ~_~" ; else
 	echo -e "\n${GREEN}[i] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found from wayback! Let's find out how many of them are alive..."
 	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
 	fi
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
-	echo -e  "${GREEN}[i] $(cat ../$2 | wc -l ) JS files are alive! :D"
+	echo -e  "${GREEN}[i] $(cat ../$2 | wc -l ) Alive JS files found! :D"
 	file="$2"
 	jsReconStart "$file"
 	#rm freshJs
