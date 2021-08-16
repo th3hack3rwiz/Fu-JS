@@ -26,7 +26,7 @@ function jsReconStart(){
 		echo -ne "${OFFWHITE}[+] Finding endpoints on $line\n\tTotal potential endpoints found: $count\t JS Files remaining: $jsfiles \\r" 
 		jsfiles=$(($jsfiles - 1))
 		python3 YYYY -i $line -o cli >> $domain.js-secrets
-        printf "\n"  >> $domain.linkfinder-output.txt
+        	printf "\n"  >> $domain.linkfinder-output.txt
 		python3 XXXX -o cli -i $line > temp 2>&1  #storing endpoints
 		cat temp | grep -E "SSL error|DH_KEY_TOO_SMALL" >/dev/null
 		if [ $? -eq 0 ]; then
@@ -51,14 +51,15 @@ function jsReconStart(){
 	if [ -s $domain.jsEndpointsx ] ; then 
 		echo -e "\n\n${ORANGE}[~] Finding alive endpoints extracted from JS files. ~_~"
 		num=$(ffuf -s -u FUZZ -w $domain.jsEndpointsx -t 200 -mc 200,301,302,403,401 -sa -fs 0 -fr "Not Found" -of csv -o testx | anew endpoints | wc -l)
-		if [ $num -eq 0 ] ; then echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
+		if [ $num -eq 0 ] ; then 
+			echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
 		else 
-		echo -e "${GREEN}[i] $num alive endpoints discovered! :D"
-		rm $domain.jsEndpointsx
-		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
-		rm endpoints
-		cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
-		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints > /dev/null 2>&1 
+			echo -e "${GREEN}[i] $num alive endpoints discovered! :D"
+			rm $domain.jsEndpointsx
+			cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
+			rm endpoints
+			cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
+			cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints > /dev/null 2>&1 
 		fi
 		rm testx
 
@@ -81,38 +82,42 @@ function jsReconStart(){
 }
 
 function jsGrab {
-echo -e "${GREEN}[i] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
-mkdir js-dump 2>&1 > /dev/null
-echo -e  "${ORANGE}[~] Fetching all JS files for manual static recon...\n"
-for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) 
-do 
-name=$(echo -e  $i | md5sum | awk '{print $1}')
-ls js-dump/ | grep $name >/dev/null
-if [ $? -ne 0   ]; then
-echo -e  "${OFFWHITE}[+] Fetching $i" | tee -a js-dump/$name
-curl -L --connect-timeout 10 --max-time 10 --insecure --silent $i | js-beautify -i 2> /dev/null >> js-dump/$name 
-if [ $(cat js-dump/$name | wc -l) -lt 4 ] ; then rm js-dump/$name ; fi 
-fi
-done
-#creating wordlists
-cd js-dump
-for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$" ; done ; done | anew -q ../$domain.js-wordlist
-cd ..
-for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev ".*\.|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | sed 's/://g' | sort -u | anew -q $domain.linkfinderWordlist.txt ; done
-cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
-rm $domain.linkfinderWordlist.txt
-if [ ! -s $domain.js-wordlist ]; then rm $domain.js-wordlist ; else echo -e "\n${OFFWHITE}[~] Wordlist Generated!\n"
-fi
+	echo -e "${GREEN}[i] Total JS files loaded: $(cat ../$1 | wc -l)" #| notify -silent
+	mkdir js-dump 2>&1 > /dev/null
+	echo -e  "${ORANGE}[~] Fetching all JS files for manual static recon...\n"
+	for i in $(cat ../$1 | sed 's/^[[:space:]]*//g' | uniq | grep $domain) ; do 
+		name=$(echo -e  $i | md5sum | awk '{print $1}')
+		ls js-dump/ | grep $name >/dev/null
+		if [ $? -ne 0   ]; then
+			echo -e  "${OFFWHITE}[+] Fetching $i" | tee -a js-dump/$name
+			curl -L --connect-timeout 10 --max-time 10 --insecure --silent $i | js-beautify -i 2> /dev/null >> js-dump/$name 
+			if [ $(cat js-dump/$name | wc -l) -lt 4 ] ; then
+				rm js-dump/$name 
+			fi 
+		fi
+	done
+	#creating wordlists
+	cd js-dump
+	for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$" ; done ; done | anew -q ../$domain.js-wordlist
+	cd ..
+	for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | sed 's/https:\/\///g' | grep -Ev "[+]" | grep -v ^$ | unfurl paths | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev "\.com|\.net|\.in|\.io|\.gov|\.org|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ ; done
+	cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
+	rm $domain.linkfinderWordlist.txt
+	if [ ! -s $domain.js-wordlist ]; then 
+		rm $domain.js-wordlist 
+	else 
+		echo -e "\n${OFFWHITE}[~] Wordlist Generated!\n"
+	fi
 }
 
 function usage {
-echo -e "${PINK}\n[+] Usage:\n\tFu-JS -j <js-file-list> -s <subdomain-list> target.com"
-echo -e "\n${ORANGE} -j : ${OFFWHITE}to use your own list of js files."
-echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -j <js-file-list> target.com\n"
-echo -e "\n${ORANGE} -s : ${OFFWHITE}to use a file containing a list of subdomains of your target to gather JS files associated with those subdomains."
-echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> target.com"
-echo -e "\n${ORANGE} -d : ${OFFWHITE}to define depth while crawling the subdomains. (By default 1)."
-echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> -j <js-file-list> -d 2 target.com"
+	echo -e "${PINK}\n[+] Usage:\n\tFu-JS -j <js-file-list> -s <subdomain-list> target.com"
+	echo -e "\n${ORANGE} -j : ${OFFWHITE}to use your own list of js files."
+	echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -j <js-file-list> target.com\n"
+	echo -e "\n${ORANGE} -s : ${OFFWHITE}to use a file containing a list of subdomains of your target to gather JS files associated with those subdomains."
+	echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> target.com"
+	echo -e "\n${ORANGE} -d : ${OFFWHITE}to define depth while crawling the subdomains. (By default 1)."
+	echo -e "${ORANGE}  Eg: ${GREEN}Fu-JS -s <subdomain-list> -j <js-file-list> -d 2 target.com"
 }
 
 function gatherJS {
@@ -137,8 +142,11 @@ function gatherJS {
 	echo -e  "${ORANGE}[~] Let's go wayback on the subdomains and gather all urls to potentially find some alive js files. This can take a while. Have patience. \n\tPerhaps time for a coffee break?\n"
 	echo -e  $domain | waybackurls| anew -q $domain.urls & gau -subs $domain | anew -q $domain.urls ; wait ; cat $domain.urls | sort -u > buff ; cat buff > $domain.urls ; rm buff 
 	for line in $(cat https-subdomains  | grep $domain | awk -F "/" '{print $3}') ; do echo -e  "${OFFWHITE}[+] Running on $line" ; waybackurls $line | anew -q $domain.urls ; done
+	sum=$($domain.urls | grep -E "\.js" | wc -l)
+	if [ $sum -eq 0 ]; then echo -e "${RED}[~] No JS files found using wayback. ~_~" ; else
 	echo -e "\n${GREEN}[i] $(cat $domain.urls | grep -E "\.js" | wc -l ) Potential JS files found from wayback! Let's find out how many of them are alive..."
 	cat $domain.urls | grep -E "\.js" | uniq | sort | hakcheckurl -t 50 | grep "200" | awk '{print $2}' | grep $tar | anew -q ../$2
+	fi
 	rm $domain.urls
 	rm $domain.crawlledEndpoints 
 	echo -e  "${GREEN}[i] $(cat ../$2 | wc -l ) JS files are alive! :D"
