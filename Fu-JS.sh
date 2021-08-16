@@ -96,7 +96,7 @@ fi
 done
 #creating wordlists
 cd js-dump
-for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$" ; done ; done | anew -q ../$domain.js-wordlist
+for i in $(grep -rioP "(?<=(\"|\'|\`))\/[a-zA-Z0-9_?&=\/\-\#\.]*(?=(\"|\'|\`))" | grep /api/ ) ; do for j in `seq 1 8` ; do echo $i |  cut -d "/" -f $j | grep -vE ":|^$|\.com|\.net|\.in|\.io|\.gov|\.org" ; done ; done | anew -q ../$domain.js-wordlist
 cd ..
 for i in `seq 1 8` ; do cat $domain.linkfinder-output.txt | sed 's/https:\/\///g' | grep -Ev "[+]" | grep -v ^$ | unfurl paths | grep "^/" | cut -d "/" -f $i | sort -u | grep -Ev "\.com|\.net|\.in|\.io|\.gov|\.org|%|\-\-|[[:lower:]]+-[[:lower:]]+-[[:lower:]]+|^[[:digit:]]+|^-|^_|^-[[:digit:]]|^[[:lower:]]+[[:upper:]]|.*,.*|[[:upper:]]+[[:lower:]]+[[:upper:]]+|_|[[:upper:]]+[[:digit:]]+|[[:lower:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:upper:]]+[[:digit:]][[:digit:]]+[[:lower:]]*|[[:alpha:]]+-[[:alpha:]]+-|^[[:digit:]]+|\.html$|==$|\.png$|\.jpg$|\.css$|\.gif$|\.pdf$|\.js$|\.jpeg$|\.tif$|\.tiff$|\.ttf$|\.woff$|\.woff2$|\.ico$|\.svg$|\.txt$" | grep -v ^$ | anew -q $domain.linkfinderWordlist.txt ; done
 cat $domain.linkfinderWordlist.txt | anew -q $domain.js-wordlist
