@@ -54,12 +54,13 @@ function jsReconStart(){
 		if [ $num -eq 0 ] ; then echo -e "${RED}[+] Hmm, no endpoints discovered this time. :|"
 		else 
 		echo -e "${GREEN}[i] $num alive endpoints discovered! :D"
-		rm $domain.jsEndpointsx
 		cat endpoints | grep -E ".js$" | sed 's/.*http/http/g' | fff > freshJs 2>&1
-		rm endpoints
+		
 		cat freshJs | grep -E "200$" | tr -d '200' | xargs -n1 > temp
 		cat testx | sed s/'^.*http'/http/g | sed 's/\,\,/ /g' | qsreplace -a | sed 's/%20/ /g' | sed 's/ [[:digit:]]*,/                    /g' | sed 's/,$//g' | grep http | sort -u | sed 's/.*http/http/g' | anew -q js-active-endpoints > /dev/null 2>&1 
 		fi
+		rm $domain.jsEndpointsx
+		rm endpoints
 		rm testx
 
 	fi
