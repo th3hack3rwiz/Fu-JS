@@ -52,7 +52,7 @@ echo "[+] Installing gf"
 lol=$(pwd)
 cd ~
 mkdir .gf
-go get -u github.com/tomnomnom/gf
+go install -v github.com/tomnomnom/gf@latest
 cp $GOPATH/src/github.com/tomnomnom/gf/examples/* ~/.gf
 if [[ -f ~/.zshrc ]]; then 
         echo 'source $GOPATH/src/github.com/tomnomnom/gf/gf-completion.bash' >> ~/.zshrc
@@ -66,27 +66,27 @@ else
 fi
 cd $lol
 echo "[+] Installing anew"
-go get -u github.com/tomnomnom/anew
+go install -v github.com/tomnomnom/anew@latest
 echo "[+] Installing fff"
-go get -u github.com/tomnomnom/fff
+go install -v github.com/tomnomnom/fff@latest
 echo "[+] Installing unfurl"
-go get -u github.com/tomnomnom/unfurl
+go install -v github.com/tomnomnom/unfurl@latest
 echo "[+] Installing gau"
-GO111MODULE=on go get -u -v github.com/lc/gau
+GO111MODULE=on go install -v github.com/lc/gau@latest
 echo "[+] Installing waybackurls"
-go get github.com/tomnomnom/waybackurls
+go install -v github.com/tomnomnom/waybackurls@latest
 echo "[+] Installing subjs"
-GO111MODULE=on go get -u -v github.com/lc/subjs
+GO111MODULE=on go install -v github.com/lc/subjs@latest
 echo "[+] Installing ffuf"
-go get -u github.com/ffuf/ffuf
+go install -v github.com/ffuf/ffuf@latest
 echo "[+] Installing hakrawler"
-go get github.com/hakluke/hakrawler
+go install github.com/hakluke/hakrawler@latest
 echo "[+] Installing hakcheckurl"
-go get github.com/hakluke/hakcheckurl
+go install -v github.com/hakluke/hakcheckurl@latest
 echo "[+] Installing qsreplace"
-go get -u github.com/tomnomnom/qsreplace
+go install -v github.com/tomnomnom/qsreplace@latest
 echo "[+] Installing httprobe"
-go get -u github.com/tomnomnom/httprobe
+go install -v github.com/tomnomnom/httprobe@latest
 echo "[+] Installing linkfinder"
 git clone https://github.com/GerbenJavado/LinkFinder.git
 cd LinkFinder
