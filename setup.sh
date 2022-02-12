@@ -14,38 +14,43 @@ exit 1
 fi
 sudo apt-get install python3-pip
 sudo apt install pip
+
 read -p "Do you have golang installed and GOPATH set?(y/n):"
 if [[ "$REPLY" != "y" ]]; then echo "Ok, installing golang!"
-	sudo apt install golang
-	 if [[ -f ~/.zshrc ]]; then 
-        test='export PATH="$PATH:/home'
-	test1=${user}/go/bin/
-	echo $test/$test1\">> ~/.zshrc
+	
+	wget "https://go.dev/dl/go1.17.6.linux-amd64.tar.gz"
+	sudo rm -rf /usr/local/go 
+	tar -C $HOME -xzf go1.17.6.linux-amd64.tar.gz
+if [[ -f ~/.zshrc ]]; then 
+    test='export PATH=$PATH:'
+	test1=$HOME/go/bin/
+	echo $test$test1>> ~/.zshrc
         
-	test='export GOPATH="/home'
-	test1=${user}/go/
-	echo $test/$test1\">> ~/.zshrc
+	test='export GOPATH='
+	test1=$HOME/go/
+	echo $test$test1>> ~/.zshrc
         source ~/.zshrc 
 	else
-	
-        test='export PATH="$PATH:/home'
-	test1=${user}/go/bin/
-	echo $test/$test1\">> ~/.bashrc
+	test='export PATH=$PATH:'
+	test1=$HOME/go/bin/
+	echo $test$test1>> ~/.bashrc
         
-	test='export GOPATH="/home'
-	test1=${user}/go/
-	echo $test/$test1\">> ~/.bashrc
-        source ~/.bashrc 
+	test='export GOPATH='
+	test1=$HOME/go/
+	echo $test$test1>> ~/.bashrc
+        source ~/.zshrc 
 	fi
+rm go1.17.6.linux-amd64.tar.gz 
 else
 	echo $GOPATH | grep "go" >/dev/null 
-	if [[ $? -eq 0 ]]
-	then 
+	if [[ $? -eq 0 ]] ;	then 
 		echo "[+] You're all set!"
 	else 
 		echo "[!] Something is not right, kindly install golang manually and set the GOPATH. Then run this script again."
 		exit 1
 	fi
+fi
+
 echo "OK, installing necessary tools now."
 fi
 echo "[+] Installing gf"
