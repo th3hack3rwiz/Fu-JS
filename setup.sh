@@ -9,8 +9,8 @@ echo -e "\033[0;37m\e[1m\t\t\t\t\t\t  ${GREY}${BOLD}© Created By: th3hack3rwiz\
 user=$(whoami)
 
 if [[ "$user" = "root" ]]; then
-echo "[!] Do not run as root!"
-exit 1
+	echo "[!] Do not run as root!"
+	exit 1
 fi
 sudo apt-get install python3-pip
 sudo apt install pip
@@ -21,26 +21,26 @@ if [[ "$REPLY" != "y" ]]; then echo "Ok, installing golang!"
 	wget "https://go.dev/dl/go1.17.6.linux-amd64.tar.gz"
 	sudo rm -rf /usr/local/go 
 	tar -C $HOME -xzf go1.17.6.linux-amd64.tar.gz
-if [[ -f ~/.zshrc ]]; then 
-    test='export PATH=$PATH:'
-	test1=$HOME/go/bin/
-	echo $test$test1>> ~/.zshrc
+	if [[ -f ~/.zshrc ]]; then 
+    		test='export PATH=$PATH:'
+		test1=$HOME/go/bin/
+		echo $test$test1>> ~/.zshrc
         
-	test='export GOPATH='
-	test1=$HOME/go/
-	echo $test$test1>> ~/.zshrc
-        source ~/.zshrc 
+		test='export GOPATH='
+		test1=$HOME/go/
+		echo $test$test1>> ~/.zshrc
+        	source ~/.zshrc 
 	else
-	test='export PATH=$PATH:'
-	test1=$HOME/go/bin/
-	echo $test$test1>> ~/.bashrc
+		test='export PATH=$PATH:'
+		test1=$HOME/go/bin/
+		echo $test$test1>> ~/.bashrc
         
-	test='export GOPATH='
-	test1=$HOME/go/
-	echo $test$test1>> ~/.bashrc
-        source ~/.zshrc 
+		test='export GOPATH='
+		test1=$HOME/go/
+		echo $test$test1>> ~/.bashrc
+        	source ~/.zshrc 
 	fi
-rm go1.17.6.linux-amd64.tar.gz 
+	rm go1.17.6.linux-amd64.tar.gz 
 else
 	echo $GOPATH | grep "go" >/dev/null 
 	if [[ $? -eq 0 ]] ;	then 
@@ -52,7 +52,6 @@ else
 fi
 
 echo "OK, installing necessary tools now."
-fi
 echo "[+] Installing gf"
 lol=$(pwd)
 cd ~
